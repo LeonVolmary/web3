@@ -23,7 +23,7 @@ async def main():
     client = ANPClient(did_document_path=str(DID_DOC_PATH),private_key_path=str(private_key))
     print("\n1. Client initialized")
     
-    # Ruft die Agenten-Beschreibungen beider Server ab
+    # Ruft die Agenten-Beschreibungen ab
     for i in SEARCH_AGENT_URL:
         ad_url = f"{i}/ad.json"
         print(f"\n2. Fetching agent description from {ad_url}...")
