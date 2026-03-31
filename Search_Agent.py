@@ -14,8 +14,8 @@ anp = FastANP(
 # Die Agenten-Registry
 AGENT_REGISTRY = [
     {
-        "name": "Uhrzeit-Agent",
-        "capability": "Besitzt einen SmartContract für die aktuelle Uhrzeit",
+        "name": "Verkäufer Agent",
+        "capability": "Verkauft wichtige Daten für 1000 Wei",
         "endpoint": "http://localhost:6000"
     },
 ]

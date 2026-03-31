@@ -1,5 +1,6 @@
 import asyncio
 import json
+from datetime import datetime
 from pathlib import Path
 from anp import ANPClient
 from web3 import Web3
@@ -40,7 +41,7 @@ async def main():
     search_result = await client.call_jsonrpc(
         server_url=f"{SEARCH_AGENT_URL[0]}/rpc",
         method="agentsearch",
-        params={"requirement": "Uhrzeit"}
+        params={"requirement": "Daten"}
     )
 
     agent_url_to_use = search_result['result'][0]["endpoint"]
@@ -49,7 +50,7 @@ async def main():
     # Nutzung ohne LLM (Direkte abfrage)
     sc = await client.call_jsonrpc(
         server_url=f"{agent_url_to_use}/rpc",
-        method="timeInfo",
+        method="purchase",
         params={}
     )
 
@@ -57,10 +58,14 @@ async def main():
     w3 = Web3(Web3.HTTPProvider(sc["result"]["provider"]))
     contract = w3.eth.contract(address=sc["result"]["address"], abi= json.loads(sc["result"]["abi"]))
     account = w3.eth.account.from_key(PRIVATE_KEY_BLOCKCHAIN)
+    print("Frage Preis an...")
+    price_in_wei = contract.functions.price().call()
+    print(f"{price_in_wei} Wei")
+
     print("Sende Transaktion...")
-    tx_hash = contract.functions.get_current_timestamp().transact({
+    tx_hash = contract.functions.purchase().transact({
         'from' : account.address,
-        'value' : w3.to_wei(0.01, 'ether'),
+        'value' : price_in_wei,
         'gas' : 100000,
         'nonce' : w3.eth.get_transaction_count(account.address)
     })
@@ -68,9 +73,16 @@ async def main():
     receipt = w3.eth.wait_for_transaction_receipt(tx_hash)
     print(f"Erfolg! Transaction Hash: {receipt.transactionHash.hex()}")
 
-    logs = contract.events.DateQueried().process_receipt(receipt)
-    if logs:
-        print(f"Timestamp: {logs[0].args.timestamp}")
+    answer = await client.call_jsonrpc(
+        server_url=f"{agent_url_to_use}/rpc",
+        method="returnData",
+        params={}
+    )
+    print(f"Erhaltene Antwort: {answer}")
+    if answer != "":
+        tx_hash = contract.functions.confirm_delivery().transact({
+            'from' : account.address
+        })
 
 if __name__ == "__main__":
     asyncio.run(main())
