@@ -1,3 +1,5 @@
+import time
+
 from anp.fastanp import FastANP
 import uvicorn
 from web3 import Web3
@@ -41,12 +43,14 @@ def purchase() -> dict:
     Veröffentlicht den Smart Contract
     :return: Dictionary with "abi", "address", "provider"
     """
+    start_deploy = time.time()
     tx_hash = contract_to_deploy.constructor(10000, "Die Antwort auf alles").transact({
         'from': account.address,
         'gas': 2000000
     })
 
     tx_receipt = w3.eth.wait_for_transaction_receipt(tx_hash)
+    end_deploy = time.time()
     contract_address = tx_receipt.contractAddress
     print(f"Vertrag erstellt{contract_address}")
     print(f"Account Value:{w3.eth.get_balance(account.address)}")
@@ -56,7 +60,9 @@ def purchase() -> dict:
     sc = {
         "abi": f"{contract_abi}",
         "address": f"{contract_address}",
-        "provider": "http://192.168.0.167:8545"
+        "provider": "http://192.168.0.167:8545",
+        "time": end_deploy - start_deploy,
+        "cost": tx_receipt.gasUsed
     }
     return sc
 
