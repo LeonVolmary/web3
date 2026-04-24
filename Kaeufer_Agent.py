@@ -7,6 +7,10 @@ import time
 from anp import ANPClient
 from web3 import Web3
 
+import matplotlib.pyplot as plt
+import seaborn as sns
+import pandas as pd
+
 project_root = Path(__file__).parent
 print(project_root)
 DID_DOC_PATH = project_root / "did_public" / "public-did-doc.json"
@@ -14,7 +18,7 @@ PRIVATE_KEY_PATH = project_root / "did_public" / "public-private-key.pem"
 PRIVATE_KEY_BLOCKCHAIN = "0x59c6995e998f97a5a0044966f0945389dc9e86dae88c7a8412f4603b6b78690d"
 SEARCH_AGENT_URL = "http://localhost:8000",
 
-RUNS = 5 # Anzahl der Testdurchläufe
+RUNS = 10 # Anzahl der Testdurchläufe
 
 # Messung
 results = { "end_to_end": [],
@@ -116,7 +120,7 @@ async def main():
 
     end_total = time.time()
 
-    #Speichern
+    # Speichern
     results["search_latency"].append(search_end - search_start) 
     results["end_to_end"].append(end_total - start_total)
     results["blockchain_latency"].append(tx_end - tx_start)
@@ -145,11 +149,45 @@ def print_results():
     print(f" confirm(): Ø {int(statistics.mean(results['gas_confirm']))}")
     print(f" deploy(): Ø {int(statistics.mean(results['gas_deploy']))}")
 
+def plot_results():
+    # 1. Daten in ein DataFrame umwandeln (einfacher für Seaborn)
+    df_latency = pd.DataFrame({
+        'Search': results["search_latency"],
+        'Transaction': results["blockchain_latency"],
+        'Confirm': results["confirm_latency"],
+        'Deploy': results["deploy_latency"]
+    })
+
+    # 2. Plot erstellen
+    plt.figure(figsize=(12, 6))
+    
+    # Subplot 1: Latenzen als Boxplot
+    plt.subplot(1, 2, 1)
+    sns.boxplot(data=df_latency)
+    plt.title('Latenz Verteilung (s)')
+    plt.ylabel('Sekunden')
+
+    # Subplot 2: Gas Kosten (Durchschnitt)
+    plt.subplot(1, 2, 2)
+    gas_means = {
+        'Purchase': sum(results["gas_purchase"]) / len(results["gas_purchase"]),
+        'Confirm': sum(results["gas_confirm"]) / len(results["gas_confirm"]),
+        'Deploy': sum(results["gas_deploy"]) / len(results["gas_deploy"])
+    }
+    plt.bar(gas_means.keys(), gas_means.values(), color='orange')
+    plt.title('Ø Gas Kosten')
+    plt.ylabel('Gas Units')
+
+    plt.tight_layout()
+    plt.show()
+
 async def run():
     for i in range(RUNS):
         print(f"Run {i+1}/{RUNS}") 
         await main()
-        print_results()
+    print_results()
+    plot_results()
 
 if __name__ == "__main__": 
     asyncio.run(run())
+    # asyncio.run(main())
