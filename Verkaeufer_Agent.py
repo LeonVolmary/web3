@@ -4,7 +4,8 @@ from web3 import Web3
 from web3.contract import Contract
 import json
 
-w3 = Web3(Web3.HTTPProvider("http://192.168.0.167:8545"))
+ETHER_NODE = "http://192.168.0.167:8545"
+w3 = Web3(Web3.HTTPProvider(ETHER_NODE))
 if not w3.is_connected():
     print("Nicht mit der Blockchain verbunden")
     exit()
@@ -56,7 +57,7 @@ def purchase() -> dict:
     sc = {
         "abi": f"{contract_abi}",
         "address": f"{contract_address}",
-        "provider": "http://192.168.0.167:8545"
+        "provider": ETHER_NODE
     }
     return sc
 
